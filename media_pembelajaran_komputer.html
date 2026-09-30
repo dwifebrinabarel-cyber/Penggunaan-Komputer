@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Media Interaktif - Penggunaan Komputer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800;900&display=swap');
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f8fafc;
+            color: #334155;
+            overflow-x: hidden;
+        }
+
+        .flip-card {
+            background-color: transparent;
+            width: 100%;
+            height: 380px;
+            perspective: 1000px;
+            cursor: pointer;
+        }
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+            transform-style: preserve-3d;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            border-radius: 1.5rem;
+        }
+        .flip-card.flipped .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+        .flip-card-front, .flip-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+        }
+        .flip-card-front {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            border: 4px solid #c4b5fd;
+        }
+        .flip-card-back {
+            background-color: white;
+            color: #1e293b;
+            transform: rotateY(180deg);
+            border: 4px solid #6366f1;
+            overflow-y: auto;
+        }
+
+        .match-item {
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.2s, box-shadow 0.2s;
+        }
+        .match-item:hover { transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .match-item.selected {
+            background-color: #fef08a !important;
+            border-color: #eab308 !important;
+            transform: scale(1.03);
+            box-shadow: 0 0 15px rgba(234, 179, 8, 0.4);
+        }
+        .match-item.matched {
+            background-color: #bbf7d0 !important;
+            border-color: #22c55e !important;
+            cursor: default;
+            opacity: 0.9;
+            transform: scale(0.98);
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            60% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); }
+        }
+        .animate-bounce-in { animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        .animate-float { animation: float 3s ease-in-out infinite; }
+
+        .hidden-section { display: none; }
+        .active-section { display: block; animation: fadeIn 0.4s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+
+        #toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #1e293b;
+            color: #fff;
+            text-align: center;
+            border-radius: 8px;
+            padding: 16px;
+            position: fixed;
+            z-index: 50;
+            left: 50%;
+            bottom: 30px;
+            transform: translateX(-50%);
+            font-size: 16px;
+            font-weight: bold;
+            box-shadow: 0px 4px 15px rgba(0,0,0,0.2);
+        }
+        #toast.show {
+            visibility: visible;
+            animation: fadein 0.3s, fadeout 0.3s 2.7s;
+        }
+        @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
+        @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <nav class="bg-indigo-900 text-white shadow-lg sticky top-0 z-40 border-b-4 border-cyan-400">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center cursor-pointer transform transition hover:scale-105" onclick="navigate('beranda')">
+                    <i class="fa-solid fa-computer text-2xl text-indigo-900 bg-cyan-400 rounded-lg p-2 mr-3 shadow-md"></i>
+                    <span class="font-extrabold text-2xl tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-indigo-300">TeknoKids</span>
+                </div>
+                
+                <div class="md:hidden">
+                    <button id="mobile-menu-btn" class="text-cyan-300 hover:text-white focus:outline-none">
+                        <i class="fa-solid fa-bars text-3xl"></i>
+                    </button>
+                </div>
+                
+                <div class="hidden md:flex space-x-2">
+                    <button onclick="navigate('beranda')" class="nav-btn px-4 py-2 rounded-lg text-sm font-bold hover:bg-indigo-700 transition-colors bg-indigo-700" data-target="beranda"><i class="fa-solid fa-house mr-1"></i> Beranda</button>
+                    <button onclick="navigate('materi')" class="nav-btn px-4 py-2 rounded-lg text-sm font-bold hover:bg-indigo-700 transition-colors" data-target="materi">Materi</button>
+                    <button onclick="navigate('latihan-bs')" class="nav-btn px-4 py-2 rounded-lg text-sm font-bold hover:bg-indigo-700 transition-colors" data-target="latihan-bs">Benar/Salah</button>
+                    <button onclick="navigate('latihan-jodoh')" class="nav-btn px-4 py-2 rounded-lg text-sm font-bold hover:bg-indigo-700 transition-colors" data-target="latihan-jodoh">Menjodohkan</button>
+                    <button onclick="navigate('kuis')" class="nav-btn px-4 py-2 rounded-lg text-sm font-bold hover:bg-indigo-700 transition-colors" data-target="kuis">Kuis</button>
+                    <button onclick="navigate('game')" class="nav-btn px-4 py-2 rounded-lg text-sm font-bold bg-cyan-500 hover:bg-cyan-400 text-indigo-950 transition-colors shadow-[0_0_10px_rgba(6,182,212,0.5)]" data-target="game"><i class="fa-solid fa-gamepad mr-1"></i> Main Game!</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="mobile-menu" class="hidden md:hidden bg-indigo-800 pb-3 pt-2 shadow-inner border-t border-indigo-700">
+             <button onclick="navigate('beranda'); closeMobileMenu()" class="block w-full text-left px-6 py-3 font-semibold text-white hover:bg-indigo-700 border-b border-indigo-700"><i class="fa-solid fa-house w-6"></i> Beranda</button>
+             <button onclick="navigate('materi'); closeMobileMenu()" class="block w-full text-left px-6 py-3 font-semibold text-white hover:bg-indigo-700 border-b border-indigo-700"><i class="fa-solid fa-layer-group w-6"></i> Flashcard Materi</button>
+             <button onclick="navigate('latihan-bs'); closeMobileMenu()" class="block w-full text-left px-6 py-3 font-semibold text-white hover:bg-indigo-700 border-b border-indigo-700"><i class="fa-solid fa-check-double w-6"></i> Latihan Benar/Salah</button>
+             <button onclick="navigate('latihan-jodoh'); closeMobileMenu()" class="block w-full text-left px-6 py-3 font-semibold text-white hover:bg-indigo-700 border-b border-indigo-700"><i class="fa-solid fa-link w-6"></i> Latihan Menjodohkan</button>
+             <button onclick="navigate('kuis'); closeMobileMenu()" class="block w-full text-left px-6 py-3 font-semibold text-white hover:bg-indigo-700 border-b border-indigo-700"><i class="fa-solid fa-clipboard-question w-6"></i> Kuis Evaluasi</button>
+             <button onclick="navigate('game'); closeMobileMenu()" class="block w-full text-left px-6 py-3 font-bold text-indigo-950 bg-cyan-500 hover:bg-cyan-400"><i class="fa-solid fa-gamepad w-6"></i> Mini Game</button>
+        </div>
+    </nav>
+
+    <main class="flex-grow container mx-auto px-4 py-8 max-w-5xl">
+        
+        <!-- BAGIAN BERANDA -->
+        <section id="beranda" class="active-section text-center">
+            <div class="bg-white rounded-[2rem] p-8 md:p-12 shadow-2xl border-t-8 border-indigo-500 relative overflow-hidden">
+                <div class="absolute -top-10 -right-10 opacity-5 rotate-12">
+                    <i class="fa-solid fa-microchip text-[250px] text-indigo-600"></i>
+                </div>
+                <div class="absolute -bottom-10 -left-10 opacity-5 -rotate-12">
+                    <i class="fa-solid fa-code text-[200px] text-cyan-600"></i>
+                </div>
+                
+                <div class="relative z-10 animate-float">
+                    <i class="fa-solid fa-laptop-code text-7xl text-indigo-500 mb-4 drop-shadow-md"></i>
+                </div>
+
+                <h1 class="text-4xl md:text-5xl lg:text-6xl font-black text-slate-800 mb-6 animate-bounce-in leading-tight">
+                    Yuk, Belajar <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-cyan-500">Komputer</span> Bersama!
+                </h1>
+                <p class="text-lg md:text-xl text-slate-600 mb-10 max-w-2xl mx-auto font-medium">
+                    Jelajahi dunia teknologi, kenali perangkat komputer, dan pelajari cara menggunakannya dengan aman dan cerdas melalui aktivitas seru.
+                </p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8 relative z-10">
+                    <div class="bg-indigo-50 rounded-2xl p-6 border-2 border-indigo-100 hover:border-indigo-400 hover:shadow-xl transition-all cursor-pointer transform hover:-translate-y-2 group" onclick="navigate('materi')">
+                        <div class="bg-indigo-500 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 text-white text-2xl shadow-lg group-hover:scale-110 transition-transform rotate-3">
+                            <i class="fa-solid fa-book-open"></i>
+                        </div>
+                        <h3 class="font-bold text-xl mb-2 text-slate-800">1. Kenali Alat</h3>
+                        <p class="text-slate-600 text-sm">Gunakan Flashcard untuk tahu nama dan fungsi perangkat.</p>
+                    </div>
+                    
+                    <div class="bg-cyan-50 rounded-2xl p-6 border-2 border-cyan-100 hover:border-cyan-400 hover:shadow-xl transition-all cursor-pointer transform hover:-translate-y-2 group" onclick="navigate('latihan-bs')">
+                        <div class="bg-cyan-500 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 text-white text-2xl shadow-lg group-hover:scale-110 transition-transform -rotate-3">
+                            <i class="fa-solid fa-puzzle-piece"></i>
+                        </div>
+                        <h3 class="font-bold text-xl mb-2 text-slate-800">2. Latihan Otak</h3>
+                        <p class="text-slate-600 text-sm">Tebak mana yang benar dan jodohkan istilah komputer.</p>
+                    </div>
+
+                    <div class="bg-fuchsia-50 rounded-2xl p-6 border-2 border-fuchsia-100 hover:border-fuchsia-400 hover:shadow-xl transition-all cursor-pointer transform hover:-translate-y-2 group" onclick="navigate('game')">
+                        <div class="bg-fuchsia-500 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 text-white text-2xl shadow-lg group-hover:scale-110 transition-transform rotate-3">
+                            <i class="fa-solid fa-gamepad"></i>
+                        </div>
+                        <h3 class="font-bold text-xl mb-2 text-slate-800">3. Misi Game</h3>
+                        <p class="text-slate-600 text-sm">Susun huruf acak menjadi nama alat komputer yang benar!</p>
+                    </div>
+                </div>
+
+                <button onclick="navigate('materi')" class="mt-12 bg-gradient-to-r from-indigo-600 to-blue-500 hover:from-indigo-700 hover:to-blue-600 text-white font-bold py-4 px-12 rounded-full shadow-[0_10px_20px_rgba(99,102,241,0.4)] transition-all transform hover:scale-105 text-lg relative z-10">
+                    Mulai Belajar <i class="fa-solid fa-rocket ml-2 animate-bounce"></i>
+                </button>
+            </div>
+        </section>
+
+        <!-- BAGIAN MATERI (FLASHCARD) -->
+        <section id="materi" class="hidden-section">
+            <div class="text-center mb-8">
+                <span class="bg-indigo-100 text-indigo-800 text-sm font-extrabold px-4 py-1 rounded-full mb-3 inline-block uppercase tracking-wider">Tahap 1</span>
+                <h2 class="text-3xl md:text-4xl font-black text-slate-800"><i class="fa-solid fa-memory text-indigo-500 mr-2"></i> Perangkat Komputer Dasar</h2>
+                <p class="text-slate-600 mt-2 font-medium">Klik pada kartu ajaib di bawah ini untuk melihat fungsinya!</p>
+            </div>
+
+            <div class="flex justify-center items-center mb-6 space-x-6">
+                <button id="prev-card" class="bg-white hover:bg-indigo-50 text-indigo-600 shadow-md font-bold w-12 h-12 rounded-full transition-all flex items-center justify-center text-xl border-2 border-indigo-100 active:scale-95">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </button>
+                <span id="card-counter" class="font-black text-xl text-indigo-900 bg-white px-6 py-2 rounded-2xl shadow-sm border-2 border-indigo-100">1 / 6</span>
+                <button id="next-card" class="bg-white hover:bg-indigo-50 text-indigo-600 shadow-md font-bold w-12 h-12 rounded-full transition-all flex items-center justify-center text-xl border-2 border-indigo-100 active:scale-95">
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+
+            <div class="max-w-md mx-auto relative perspective-1000">
+                <div id="flashcard" class="flip-card" onclick="flipCard()">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front shadow-2xl bg-gradient-to-br from-indigo-500 via-purple-500 to-fuchsia-500">
+                            <div class="bg-white/20 p-6 rounded-3xl mb-4 backdrop-blur-sm border border-white/30">
+                                <i id="fc-icon" class="fa-solid fa-desktop text-7xl text-cyan-200 drop-shadow-lg animate-float"></i>
+                            </div>
+                            <h3 id="fc-title" class="text-4xl font-black text-center drop-shadow-md tracking-wide">Monitor</h3>
+                            <p class="text-indigo-100 mt-6 text-sm font-semibold flex items-center bg-black/20 px-4 py-2 rounded-full"><i class="fa-solid fa-hand-pointer mr-2 animate-bounce"></i> Sentuh untuk membalik</p>
+                        </div>
+                        <div class="flip-card-back shadow-2xl p-6 relative flex flex-col justify-start">
+                            <div class="absolute top-0 left-0 w-full h-3 bg-cyan-400 rounded-t-[1.3rem]"></div>
+                            <h4 id="fc-back-title" class="text-3xl font-black mb-4 text-indigo-800 border-b-2 border-slate-100 pb-3 w-full text-center mt-3">Monitor</h4>
+                            <div id="fc-desc" class="text-left text-slate-700 leading-relaxed overflow-y-auto w-full pr-2 font-medium text-lg"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center mt-12">
+                 <button onclick="navigate('latihan-bs')" class="bg-white border-2 border-cyan-500 text-cyan-700 hover:bg-cyan-500 hover:text-white font-bold py-3 px-8 rounded-full shadow-md transition-all group">Lanjut Bermain Kuis <i class="fa-solid fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i></button>
+            </div>
+        </section>
+
+        <!-- BAGIAN LATIHAN BENAR / SALAH -->
+        <section id="latihan-bs" class="hidden-section">
+            <div class="bg-white rounded-[2rem] p-6 md:p-10 shadow-xl border-t-8 border-cyan-400 relative">
+                <div class="text-center mb-8">
+                    <span class="bg-cyan-100 text-cyan-800 text-sm font-extrabold px-4 py-1 rounded-full mb-3 inline-block uppercase tracking-wider">Tahap 2</span>
+                    <h2 class="text-3xl md:text-4xl font-black text-slate-800"><i class="fa-solid fa-scale-balanced text-cyan-500 mr-2"></i> Benar atau Salah?</h2>
+                    <p class="text-slate-500 mt-2 font-medium">Baca kalimat di bawah ini. Apakah pernyataan tersebut Benar atau Salah?</p>
+                </div>
+                
+                <div id="bs-container" class="max-w-2xl mx-auto space-y-6"></div>
+                
+                <div class="mt-10 text-center hidden p-8 bg-cyan-50 rounded-3xl border-2 border-cyan-200" id="bs-result-container">
+                    <h3 class="text-2xl font-black text-cyan-900 mb-2">Kerja Bagus!</h3>
+                    <p id="bs-score" class="text-2xl font-black text-indigo-600 mb-6 bg-white inline-block px-8 py-3 rounded-full shadow-sm border border-cyan-100"></p>
+                    <div class="flex flex-col sm:flex-row justify-center space-y-3 sm:space-y-0 sm:space-x-4">
+                        <button onclick="resetBS()" class="bg-white border-2 border-slate-300 text-slate-700 hover:bg-slate-100 font-bold py-3 px-6 rounded-full shadow-sm"><i class="fa-solid fa-rotate-right mr-2"></i> Coba Lagi</button>
+                        <button onclick="navigate('latihan-jodoh')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-full shadow-md transition-transform hover:-translate-y-1">Lanjut ke Menjodohkan <i class="fa-solid fa-arrow-right ml-2"></i></button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- BAGIAN LATIHAN MENJODOHKAN -->
+        <section id="latihan-jodoh" class="hidden-section">
+            <div class="bg-white rounded-[2rem] p-6 md:p-10 shadow-xl border-t-8 border-fuchsia-500 relative">
+                 <div class="text-center mb-8">
+                     <span class="bg-fuchsia-100 text-fuchsia-800 text-sm font-extrabold px-4 py-1 rounded-full mb-3 inline-block uppercase tracking-wider">Tahap 3</span>
+                     <h2 class="text-3xl md:text-4xl font-black text-slate-800"><i class="fa-solid fa-plug-circle-check text-fuchsia-500 mr-2"></i> Pasangkan Kabelnya!</h2>
+                     <p class="text-slate-600 mt-2 font-medium">Klik nama alat di sebelah Kiri, lalu cari fungsinya di sebelah Kanan.</p>
+                 </div>
+
+                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                     <div class="bg-indigo-50/70 p-6 rounded-3xl border-2 border-indigo-100 shadow-inner">
+                         <h3 class="font-black text-center mb-5 text-indigo-800 bg-white py-2 rounded-xl shadow-sm uppercase tracking-wide text-sm">Nama Benda</h3>
+                         <div id="match-terms" class="space-y-4"></div>
+                     </div>
+                     
+                     <div class="bg-fuchsia-50/70 p-6 rounded-3xl border-2 border-fuchsia-100 shadow-inner">
+                         <h3 class="font-black text-center mb-5 text-fuchsia-800 bg-white py-2 rounded-xl shadow-sm uppercase tracking-wide text-sm">Apa Fungsinya?</h3>
+                         <div id="match-defs" class="space-y-4"></div>
+                     </div>
+                 </div>
+
+                 <div class="mt-10 text-center">
+                     <p id="match-status" class="text-xl font-bold mb-6 min-h-[3rem] flex items-center justify-center"></p>
+                     <button id="btn-match-next" onclick="navigate('kuis')" class="hidden bg-gradient-to-r from-fuchsia-500 to-purple-600 hover:from-fuchsia-600 hover:to-purple-700 text-white font-bold py-4 px-12 rounded-full shadow-[0_10px_20px_rgba(217,70,239,0.3)] transition-transform hover:scale-105 text-lg mx-auto">Masuk ke Kuis Akhir <i class="fa-solid fa-flag-checkered ml-2"></i></button>
+                     <button onclick="resetMatching()" class="text-slate-400 hover:text-slate-700 font-semibold mt-4 underline block mx-auto text-sm"><i class="fa-solid fa-arrow-rotate-left mr-1"></i> Ulangi Susunan Pasangan</button>
+                 </div>
+            </div>
+        </section>
+
+        <!-- BAGIAN KUIS EVALUASI -->
+        <section id="kuis" class="hidden-section">
+             <div class="bg-white rounded-[2rem] p-6 md:p-10 shadow-2xl border-t-8 border-yellow-400 max-w-3xl mx-auto relative overflow-hidden">
+                
+                <div id="quiz-intro" class="text-center py-10">
+                    <div class="bg-yellow-100 w-28 h-28 rounded-full flex items-center justify-center mx-auto mb-6 relative">
+                        <i class="fa-solid fa-clipboard-question text-6xl text-yellow-500 relative z-10"></i>
+                        <div class="absolute inset-0 bg-yellow-400 rounded-full blur-xl opacity-30 animate-pulse"></div>
+                    </div>
+                    <h2 class="text-4xl font-black text-slate-800 mb-4">Ujian Master Komputer!</h2>
+                    <p class="text-slate-600 mb-10 text-lg font-medium max-w-lg mx-auto">Buktikan kamu sudah tahu banyak tentang komputer. Ada 5 soal pilihan ganda menantang yang menunggumu.</p>
+                    <button onclick="startQuiz()" class="bg-yellow-500 hover:bg-yellow-600 text-white font-black py-4 px-12 rounded-full shadow-[0_10px_20px_rgba(234,179,8,0.4)] transition-transform transform hover:scale-110 text-xl tracking-wide uppercase">Mulai Kuis</button>
+                </div>
+
+                <div id="quiz-area" class="hidden">
+                    <div class="flex justify-between items-center mb-6 bg-slate-50 p-4 rounded-2xl border-2 border-slate-100 shadow-sm">
+                        <span id="quiz-progress" class="font-black text-indigo-700 bg-indigo-100 px-5 py-2 rounded-full text-sm">Soal 1 / 5</span>
+                        <span id="quiz-score-live" class="font-black text-slate-700 bg-white px-4 py-2 rounded-full border border-slate-200"><i class="fa-solid fa-star text-yellow-400 mr-2"></i>Skor: 0</span>
+                    </div>
+                    
+                    <div class="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 md:p-8 rounded-3xl mb-8 border-l-8 border-indigo-500 shadow-sm">
+                        <h3 id="quiz-question" class="text-xl md:text-2xl font-black text-slate-800 leading-relaxed"></h3>
+                    </div>
+                    
+                    <div id="quiz-options" class="space-y-4"></div>
+                </div>
+
+                <div id="quiz-result" class="hidden text-center py-10">
+                    <div class="relative inline-block mb-6">
+                        <i class="fa-solid fa-trophy text-8xl text-yellow-400 drop-shadow-lg animate-bounce"></i>
+                        <i class="fa-solid fa-star text-3xl text-yellow-300 absolute -top-4 -right-4 animate-ping"></i>
+                    </div>
+                    <h2 class="text-4xl font-black text-slate-800 mb-2">Kuis Selesai!</h2>
+                    <p class="text-lg text-slate-600 mb-8 font-medium">Inilah medali prestasimu:</p>
+                    
+                    <div class="bg-slate-50 border-4 border-dashed border-slate-300 rounded-[2rem] p-8 mb-8 inline-block transform hover:scale-105 transition-transform">
+                        <p class="text-sm text-slate-500 uppercase tracking-widest font-black mb-2">Skor Akhir</p>
+                        <span id="final-score" class="font-black text-indigo-600 text-7xl drop-shadow-md"></span>
+                    </div>
+                    
+                    <div id="quiz-feedback" class="mb-10 text-xl font-bold px-4"></div>
+
+                    <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+                        <button onclick="startQuiz()" class="bg-white border-2 border-slate-300 hover:bg-slate-100 text-slate-700 font-bold py-4 px-8 rounded-full shadow-sm transition-colors"><i class="fa-solid fa-rotate-left mr-2"></i> Ulangi Kuis</button>
+                        <button onclick="navigate('game')" class="bg-cyan-500 hover:bg-cyan-600 text-white font-black py-4 px-8 rounded-full shadow-[0_8px_15px_rgba(6,182,212,0.4)] transition-transform hover:-translate-y-1"><i class="fa-solid fa-gamepad mr-2"></i> Main Game Susun Kata!</button>
+                    </div>
+                </div>
+             </div>
+        </section>
+
+        <!-- BAGIAN MINI GAME (WORD SCRAMBLE / SUSUN KATA KOMPUTER) -->
+        <section id="game" class="hidden-section text-center">
+            <span class="bg-cyan-100 text-cyan-800 text-xs font-black px-4 py-2 rounded-full mb-4 inline-block uppercase tracking-wider shadow-sm border border-cyan-200"><i class="fa-solid fa-puzzle-piece mr-1"></i> Bonus Game Edukasi</span>
+            <h2 class="text-4xl font-black text-slate-800 mb-2"><i class="fa-solid fa-font text-indigo-500 mr-2"></i> Susun Huruf Kata Komputer</h2>
+            <p class="text-slate-600 mb-6 max-w-2xl mx-auto font-medium">Susun huruf-huruf acak di bawah ini menjadi nama perangkat komputer yang benar!</p>
+            
+            <div class="bg-white rounded-[2.5rem] p-8 md:p-10 shadow-2xl border-t-8 border-indigo-500 max-w-xl mx-auto relative">
+                <div class="flex justify-between items-center mb-6 font-bold text-slate-500">
+                    <span>Soal: <span id="word-level" class="text-indigo-600 font-black">1 / 5</span></span>
+                    <span>Skor: <span id="word-score" class="text-green-600 font-black">0</span> Poin</span>
+                </div>
+
+                <div class="bg-indigo-50 py-6 px-4 rounded-2xl border-2 border-indigo-100 mb-6 shadow-inner">
+                    <p class="text-xs font-black uppercase text-indigo-500 tracking-wider mb-1">Petunjuk (Clue):</p>
+                    <p id="word-clue" class="text-lg font-bold text-slate-800 mb-4">Menampilkan gambar dan teks dari komputer</p>
+                    
+                    <p class="text-xs font-black uppercase text-purple-500 tracking-wider mb-2">Huruf Acak:</p>
+                    <div id="scrambled-container" class="flex flex-wrap justify-center gap-2 mb-2"></div>
+                </div>
+
+                <div class="mb-6">
+                    <p class="text-xs font-black uppercase text-slate-400 tracking-wider mb-2">Jawaban Kamu:</p>
+                    <div id="answer-container" class="min-h-[50px] bg-slate-100 border-2 border-dashed border-slate-300 rounded-xl flex items-center justify-center gap-2 px-4 py-2 flex-wrap"></div>
+                </div>
+
+                <div class="flex gap-3 justify-center">
+                    <button onclick="resetWordCurrent()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-5 py-3 rounded-xl transition-colors text-sm"><i class="fa-solid fa-rotate-left mr-1"></i> Reset</button>
+                    <button onclick="checkWordAnswer()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-8 py-3 rounded-xl shadow-md transition-colors text-sm"><i class="fa-solid fa-check mr-1"></i> Periksa Jawaban</button>
+                </div>
+
+                <!-- Game Over State for Word Scramble -->
+                <div id="word-gameover" class="hidden absolute inset-0 bg-white/95 backdrop-blur-sm rounded-[2.5rem] flex flex-col items-center justify-center p-8">
+                    <i class="fa-solid fa-award text-6xl text-yellow-400 mb-3 animate-bounce"></i>
+                    <h3 class="text-3xl font-black text-slate-800 mb-1">Permainan Selesai!</h3>
+                    <p class="text-slate-600 mb-6 font-medium">Skor Total Kata Kamu: <span id="final-word-score" class="text-indigo-600 font-black text-2xl">0</span></p>
+                    <button onclick="startWordGame()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-black py-3 px-8 rounded-full shadow-lg text-lg transition-transform transform hover:scale-105">Main Lagi 🔄</button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-indigo-950 text-indigo-200 py-10 mt-12 text-center border-t-8 border-cyan-500 relative overflow-hidden">
+        <div class="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCI+PHBhdGggZD0iTTEwIDBMMCAxgxAgMGgxMFYweiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==')]"></div>
+        <div class="relative z-10">
+            <p class="font-black text-2xl mb-2 text-white"><i class="fa-solid fa-laptop-code text-cyan-400 mr-2"></i> TeknoKids</p>
+            <p class="text-sm mt-2 font-medium">&copy; 2026 Media Pembelajaran Interaktif Dasar Komputer.</p>
+            <p class="text-xs text-indigo-400 mt-1">Didesain khusus untuk pembelajaran yang menyenangkan.</p>
+        </div>
+    </footer>
+
+    <div id="toast">Notifikasi</div>
+
+    <script>
+        function navigate(sectionId) {
+            document.querySelectorAll('main > section').forEach(sec => {
+                sec.classList.remove('active-section');
+                sec.classList.add('hidden-section');
+            });
+            const targetSection = document.getElementById(sectionId);
+            targetSection.classList.remove('hidden-section');
+            targetSection.classList.add('active-section');
+
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                if(btn.dataset.target !== 'game') {
+                    btn.classList.remove('bg-indigo-700'); 
+                }
+            });
+            const activeBtn = document.querySelector(`.nav-btn[data-target="${sectionId}"]`);
+            if (activeBtn && sectionId !== 'game') {
+                activeBtn.classList.add('bg-indigo-700');
+            }
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            if(sectionId === 'game') {
+                startWordGame();
+            }
+        }
+
+        function closeMobileMenu() {
+            document.getElementById('mobile-menu').classList.add('hidden');
+        }
+
+        document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        });
+
+        function showToast(msg) {
+            const toast = document.getElementById("toast");
+            toast.textContent = msg;
+            toast.className = "show";
+            setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 3000);
+        }
+
+        // --- FLASHCARD LOGIC ---
+        const flashcards = [
+            {
+                title: "Monitor",
+                icon: "fa-desktop",
+                color: "text-blue-300",
+                desc: "<ul class='list-disc pl-5 space-y-3 font-semibold'><li>Layarnya komputer! Fungsinya menampilkan gambar, teks, dan video.</li><li>Tanpa monitor, kita tidak bisa melihat apa yang sedang dikerjakan komputer.</li><li>Sama seperti layar televisi, tapi untuk komputer.</li></ul>"
+            },
+            {
+                title: "Keyboard",
+                icon: "fa-keyboard",
+                color: "text-green-300",
+                desc: "<ul class='list-disc pl-5 space-y-3 font-semibold'><li>Papan ketik dengan banyak tombol huruf, angka, dan simbol.</li><li>Berfungsi untuk memasukkan data atau mengetik perintah ke dalam komputer.</li><li>Terdapat tombol penting seperti Enter (ok) dan Spacebar (spasi).</li></ul>"
+            },
+            {
+                title: "Mouse",
+                icon: "fa-computer-mouse",
+                color: "text-pink-300",
+                desc: "<ul class='list-disc pl-5 space-y-3 font-semibold'><li>Bentuknya seperti 'tikus'. Digunakan untuk menggerakkan kursor (tanda panah) di layar.</li><li>Klik Kiri: Untuk memilih atau membuka file.</li><li>Klik Kanan: Untuk membuka menu pilihan rahasia.</li></ul>"
+            },
+            {
+                title: "CPU / Sistem Unit",
+                icon: "fa-microchip",
+                color: "text-yellow-300",
+                desc: "<ul class='list-disc pl-5 space-y-3 font-semibold'><li>Kotak besar penyimpan mesin komputer. Sering disebut sebagai <b>Otak Komputer</b>.</li><li>Di dalamnya terdapat prosesor yang memikirkan dan menjalankan semua perintah kita.</li><li>Sangat penting dan tidak boleh terkena air!</li></ul>"
+            },
+            {
+                title: "Printer",
+                icon: "fa-print",
+                color: "text-orange-300",
+                desc: "<ul class='list-disc pl-5 space-y-3 font-semibold'><li>Alat untuk mencetak hasil kerja kita dari komputer ke atas kertas.</li><li>Bisa mencetak dokumen tulisan, tugas sekolah, hingga foto berwarna.</li><li>Butuh tinta dan kertas agar bisa berfungsi.</li></ul>"
+            },
+            {
+                title: "Sistem Operasi",
+                icon: "fa-brands fa-windows",
+                color: "text-cyan-300",
+                desc: "<ul class='list-disc pl-5 space-y-3 font-semibold'><li>Bukan benda fisik (Hardware), melainkan perangkat lunak (Software) utama.</li><li>Contohnya: Windows, macOS, Android.</li><li>Tugasnya mengatur semua alat komputer agar bisa bekerja sama dan mudah digunakan manusia.</li></ul>"
+            }
+        ];
+
+        let currentCardIndex = 0;
+        const cardElement = document.getElementById('flashcard');
+
+        function updateFlashcard() {
+            const card = flashcards[currentCardIndex];
+            cardElement.classList.remove('flipped');
+            document.getElementById('fc-title').textContent = card.title;
+            const icon = document.getElementById('fc-icon');
+            icon.className = `fa-solid ${card.icon} text-7xl drop-shadow-lg animate-float ${card.color}`;
+            
+            setTimeout(() => {
+                document.getElementById('fc-back-title').textContent = card.title;
+                document.getElementById('fc-desc').innerHTML = card.desc;
+            }, 150);
+
+            document.getElementById('card-counter').textContent = `${currentCardIndex + 1} / ${flashcards.length}`;
+        }
+
+        function flipCard() { cardElement.classList.toggle('flipped'); }
+
+        document.getElementById('prev-card').addEventListener('click', () => {
+            if (currentCardIndex > 0) { currentCardIndex--; updateFlashcard(); }
+        });
+        document.getElementById('next-card').addEventListener('click', () => {
+            if (currentCardIndex < flashcards.length - 1) { currentCardIndex++; updateFlashcard(); }
+        });
+
+        // --- BENAR / SALAH LOGIC ---
+        const bsData = [
+            { text: "Menekan tombol power langsung di CPU/Laptop adalah cara yang benar untuk mematikan komputer.", answer: false, reason: "Salah! Mematikan komputer harus melalui menu <b>Start -> Shutdown</b> agar tidak rusak." },
+            { text: "Monitor berfungsi seperti televisi, yaitu menampilkan gambar dan teks dari komputer.", answer: true },
+            { text: "Mouse digunakan untuk mengetik angka dan huruf ke dalam komputer.", answer: false, reason: "Mouse digunakan untuk menggerakkan panah (kursor). Untuk mengetik, kita menggunakan <b>Keyboard</b>." },
+            { text: "CPU (Central Processing Unit) sering disebut sebagai 'Otaknya Komputer'.", answer: true },
+            { text: "Kita boleh makan dan minum sembarangan di atas keyboard sambil menggunakan komputer.", answer: false, reason: "Tidak boleh. Tumpahan air atau remah makanan bisa membuat keyboard korsleting." }
+        ];
+
+        let bsAnswers = new Array(bsData.length).fill(null);
+
+        function initBS() {
+            const container = document.getElementById('bs-container');
+            container.innerHTML = '';
+            bsData.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = "p-6 bg-white rounded-2xl border-2 border-slate-100 shadow-sm bs-item transition-all hover:border-cyan-300";
+                div.innerHTML = `
+                    <p class="font-bold text-lg mb-5 text-slate-800 flex items-start">
+                        <span class="bg-cyan-100 text-cyan-800 rounded-full min-w-[32px] h-8 inline-flex items-center justify-center mr-3 font-black flex-shrink-0">${index + 1}</span> 
+                        <span class="leading-relaxed">${item.text}</span>
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <button class="bs-btn flex-1 py-4 rounded-xl border-4 border-green-400 text-green-700 hover:bg-green-50 font-black transition-colors shadow-sm text-lg" onclick="answerBS(${index}, true, this)"><i class="fa-solid fa-check-circle mr-2"></i> BENAR</button>
+                        <button class="bs-btn flex-1 py-4 rounded-xl border-4 border-red-400 text-red-700 hover:bg-red-50 font-black transition-colors shadow-sm text-lg" onclick="answerBS(${index}, false, this)"><i class="fa-solid fa-times-circle mr-2"></i> SALAH</button>
+                    </div>
+                    <div class="mt-4 text-sm hidden feedback-msg font-bold p-4 rounded-xl bg-slate-50 border"></div>
+                `;
+                container.appendChild(div);
+            });
+            document.getElementById('bs-result-container').classList.add('hidden');
+            bsAnswers.fill(null);
+        }
+
+        function answerBS(index, userAns, btn) {
+            bsAnswers[index] = userAns;
+            const parent = btn.parentElement;
+            parent.querySelectorAll('.bs-btn').forEach(b => {
+                b.classList.remove('bg-green-500', 'bg-red-500', 'text-white', 'scale-95');
+                if(b.textContent.includes('BENAR')) b.classList.add('text-green-700', 'hover:bg-green-50', 'bg-white');
+                if(b.textContent.includes('SALAH')) b.classList.add('text-red-700', 'hover:bg-red-50', 'bg-white');
+            });
+            if(userAns) {
+                btn.classList.remove('text-green-700', 'hover:bg-green-50', 'bg-white');
+                btn.classList.add('bg-green-500', 'text-white', 'scale-95');
+            } else {
+                btn.classList.remove('text-red-700', 'hover:bg-green-50', 'bg-white');
+                btn.classList.add('bg-red-500', 'text-white', 'scale-95');
+            }
+            if(!bsAnswers.includes(null)) calculateBSScore();
+        }
+
+        function calculateBSScore() {
+            let score = 0;
+            const items = document.querySelectorAll('.bs-item');
+            bsData.forEach((item, index) => {
+                const feedbackDiv = items[index].querySelector('.feedback-msg');
+                feedbackDiv.classList.remove('hidden', 'text-green-800', 'text-red-800', 'border-green-300', 'border-red-300', 'bg-green-100', 'bg-red-100');
+                if(bsAnswers[index] === item.answer) {
+                    score++;
+                    feedbackDiv.innerHTML = "<i class='fa-solid fa-face-smile text-xl mr-2 align-middle'></i> Ya, Tebakanmu Tepat Sekali!";
+                    feedbackDiv.classList.add('text-green-800', 'bg-green-100', 'border-green-300', 'border');
+                } else {
+                    feedbackDiv.innerHTML = `<i class='fa-solid fa-face-frown text-xl mr-2 align-middle'></i> Aduh, Kurang Tepat. <br><span class="font-normal text-slate-700 mt-1 block">${item.reason}</span>`;
+                    feedbackDiv.classList.add('text-red-800', 'bg-red-100', 'border-red-300', 'border');
+                }
+            });
+            const resultContainer = document.getElementById('bs-result-container');
+            resultContainer.classList.remove('hidden');
+            resultContainer.classList.add('animate-bounce-in');
+            document.getElementById('bs-score').innerHTML = `Nilai Kamu: ${score} dari ${bsData.length}`;
+            setTimeout(() => { resultContainer.scrollIntoView({behavior: "smooth", block: "nearest"}); }, 300);
+        }
+
+        function resetBS() { initBS(); document.getElementById('bs-container').scrollIntoView({behavior: "smooth", block: "center"}); }
+
+        // --- MENJODOHKAN LOGIC ---
+        const matchData = [
+            { id: 't1', term: "Hardware", dId: 'd1', desc: "Perangkat keras fisik komputer yang bisa dipegang." },
+            { id: 't2', term: "Software", dId: 'd2', desc: "Perangkat lunak/program di dalam layar (tidak bisa dipegang)." },
+            { id: 't3', term: "Kursor", dId: 'd3', desc: "Tanda panah yang bergerak di layar saat digerakkan oleh Mouse." },
+            { id: 't4', term: "Booting", dId: 'd4', desc: "Proses loading saat komputer pertama kali dinyalakan." },
+            { id: 't5', term: "Klik Kiri", dId: 'd5', desc: "Menekan tombol mouse untuk memilih atau membuka suatu file." }
+        ];
+
+        let selectedTerm = null;
+        let selectedDef = null;
+        let matchedCount = 0;
+
+        function shuffleArray(array) {
+            let cur = array.length;
+            while (0 !== cur) {
+                let rand = Math.floor(Math.random() * cur);
+                cur--;
+                [array[cur], array[rand]] = [array[rand], array[cur]];
+            }
+            return array;
+        }
+
+        function initMatching() {
+            const termsContainer = document.getElementById('match-terms');
+            const defsContainer = document.getElementById('match-defs');
+            termsContainer.innerHTML = ''; defsContainer.innerHTML = '';
+            matchedCount = 0; selectedTerm = null; selectedDef = null;
+            document.getElementById('match-status').textContent = '';
+            document.getElementById('btn-match-next').classList.add('hidden');
+
+            const shuffledTerms = shuffleArray([...matchData]);
+            const shuffledDefs = shuffleArray([...matchData]);
+
+            shuffledTerms.forEach(item => {
+                const div = document.createElement('div');
+                div.className = "match-item p-4 bg-white border-4 border-indigo-200 rounded-2xl text-center font-black text-indigo-900 shadow-sm text-lg select-none";
+                div.innerHTML = `<i class="fa-solid fa-tag text-indigo-400 mr-2"></i> ${item.term}`;
+                div.dataset.id = item.id; div.dataset.type = 'term';
+                div.onclick = () => handleMatchClick(div);
+                termsContainer.appendChild(div);
+            });
+
+            shuffledDefs.forEach(item => {
+                const div = document.createElement('div');
+                div.className = "match-item p-4 bg-white border-4 border-fuchsia-200 rounded-2xl text-sm font-bold text-fuchsia-900 shadow-sm flex items-center min-h-[80px] select-none";
+                div.textContent = item.desc;
+                div.dataset.id = item.dId; div.dataset.type = 'def';
+                div.onclick = () => handleMatchClick(div);
+                defsContainer.appendChild(div);
+            });
+        }
+
+        function handleMatchClick(element) {
+            if (element.classList.contains('matched')) return;
+            const type = element.dataset.type;
+            const statusText = document.getElementById('match-status');
+
+            if (type === 'term') {
+                if (selectedTerm) selectedTerm.classList.remove('selected');
+                selectedTerm = element; selectedTerm.classList.add('selected');
+            } else if (type === 'def') {
+                if (selectedDef) selectedDef.classList.remove('selected');
+                selectedDef = element; selectedDef.classList.add('selected');
+            }
+
+            if (selectedTerm && selectedDef) {
+                const termData = matchData.find(d => d.id === selectedTerm.dataset.id);
+                if (termData.dId === selectedDef.dataset.id) {
+                    selectedTerm.classList.replace('selected', 'matched');
+                    selectedTerm.innerHTML += ' <i class="fa-solid fa-circle-check text-green-500 ml-2 animate-bounce"></i>';
+                    selectedDef.classList.replace('selected', 'matched');
+                    matchedCount++;
+                    statusText.innerHTML = "<span class='bg-green-100 text-green-800 px-6 py-2 rounded-full border border-green-300 shadow-sm'>Pasangan Cocok!</span>";
+                    selectedTerm = null; selectedDef = null;
+
+                    if (matchedCount === matchData.length) {
+                        statusText.innerHTML = "<span class='bg-yellow-100 text-yellow-800 px-6 py-3 rounded-full border border-yellow-300 shadow-md text-xl animate-bounce'>Sempurna! Kamu Hebat!</span>";
+                        document.getElementById('btn-match-next').classList.remove('hidden');
+                    }
+                } else {
+                    statusText.innerHTML = "<span class='bg-red-100 text-red-800 px-6 py-2 rounded-full border border-red-300 shadow-sm'>Ups, Bukan itu pasangannya.</span>";
+                    setTimeout(() => {
+                        if(selectedTerm) selectedTerm.classList.remove('selected');
+                        if(selectedDef) selectedDef.classList.remove('selected');
+                        selectedTerm = null; selectedDef = null;
+                        if(matchedCount !== matchData.length) statusText.textContent = "";
+                    }, 800);
+                }
+            }
+        }
+
+        function resetMatching() { initMatching(); }
+
+        // --- KUIS EVALUASI LOGIC ---
+        const quizData = [
+            { q: "Bagaimana cara yang paling benar dan aman untuk mematikan komputer?", opts: ["Cabut kabel colokan listrik", "Tekan tombol power di CPU lama-lama", "Klik menu Start lalu pilih Shutdown", "Biarkan saja sampai mati sendiri"], ans: 2 },
+            { q: "Tombol panjang pada keyboard yang berfungsi memberi jarak/spasi antar kata adalah...", opts: ["Enter", "Shift", "Backspace", "Spacebar (Spasi)"], ans: 3 },
+            { q: "Jika kamu salah mengetik huruf dan ingin menghapus huruf di sebelah KIRI kursor, tombol apa yang ditekan?", opts: ["Backspace", "Delete", "Caps Lock", "Esc"], ans: 0 },
+            { q: "Aplikasi/Software di bawah ini yang biasa digunakan untuk mengetik surat atau dokumen adalah...", opts: ["Paint", "Microsoft Word", "Google Chrome", "Kalkulator"], ans: 1 },
+            { q: "Manakah dari benda di bawah ini yang BUKAN merupakan perangkat keras (Hardware)?", opts: ["Mouse", "Keyboard", "Sistem Operasi Windows", "Printer"], ans: 2 }
+        ];
+
+        let currentQuiz = 0;
+        let quizScore = 0;
+
+        function startQuiz() {
+            currentQuiz = 0; quizScore = 0;
+            document.getElementById('quiz-intro').classList.add('hidden');
+            document.getElementById('quiz-result').classList.add('hidden');
+            document.getElementById('quiz-area').classList.remove('hidden');
+            loadQuiz();
+        }
+
+        function loadQuiz() {
+            const data = quizData[currentQuiz];
+            document.getElementById('quiz-progress').textContent = `Soal ${currentQuiz + 1} / ${quizData.length}`;
+            document.getElementById('quiz-score-live').innerHTML = `<i class="fa-solid fa-star text-yellow-400 mr-2"></i>Skor: ${quizScore}`;
+            document.getElementById('quiz-question').textContent = `${currentQuiz + 1}. ${data.q}`;
+            
+            const optionsDiv = document.getElementById('quiz-options');
+            optionsDiv.innerHTML = '';
+            
+            data.opts.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left p-5 rounded-2xl border-4 border-slate-200 hover:bg-indigo-50 hover:border-indigo-400 transition-all bg-white font-bold text-slate-700 flex items-center group shadow-sm text-lg";
+                btn.innerHTML = `<span class="inline-flex w-10 h-10 rounded-full bg-slate-100 text-slate-500 font-black items-center justify-center mr-4 group-hover:bg-indigo-500 group-hover:text-white transition-colors border-2 border-slate-200">${String.fromCharCode(65+idx)}</span> <span>${opt}</span>`;
+                btn.onclick = () => checkQuizAns(idx);
+                optionsDiv.appendChild(btn);
+            });
+        }
+
+        function checkQuizAns(selectedIdx) {
+            const correctIdx = quizData[currentQuiz].ans;
+            const points = 100 / quizData.length;
+            if (selectedIdx === correctIdx) {
+                quizScore += points;
+                showToast("✅ Yey! Jawabanmu Benar!");
+            } else {
+                showToast("❌ Yah, Masih Kurang Tepat.");
+            }
+            currentQuiz++;
+            if (currentQuiz < quizData.length) { setTimeout(loadQuiz, 400); } 
+            else { setTimeout(finishQuiz, 500); }
+        }
+
+        function finishQuiz() {
+            document.getElementById('quiz-area').classList.add('hidden');
+            const resultArea = document.getElementById('quiz-result');
+            resultArea.classList.remove('hidden');
+            
+            let displayScore = 0;
+            const scoreEl = document.getElementById('final-score');
+            const timer = setInterval(() => {
+                scoreEl.textContent = displayScore;
+                if(displayScore >= quizScore) { clearInterval(timer); scoreEl.textContent = quizScore; } 
+                else { displayScore += 5; }
+            }, 30);
+            
+            const feedbackEl = document.getElementById('quiz-feedback');
+            if (quizScore === 100) feedbackEl.innerHTML = "<span class='text-green-600'><i class='fa-solid fa-medal mr-2 text-2xl'></i>Luar Biasa! Pemahamanmu Sempurna!</span>";
+            else if (quizScore >= 60) feedbackEl.innerHTML = "<span class='text-blue-600'><i class='fa-solid fa-thumbs-up mr-2 text-2xl'></i>Bagus Sekali! Tingkatkan terus belajarmu.</span>";
+            else feedbackEl.innerHTML = "<span class='text-orange-500'><i class='fa-solid fa-book-open mr-2 text-2xl'></i>Jangan Menyerah! Coba baca kembali materinya ya.</span>";
+        }
+
+        // --- MINI GAME (WORD SCRAMBLE / SUSUN KATA KOMPUTER) ---
+        const wordData = [
+            { word: "MONITOR", clue: "Menampilkan gambar dan teks dari komputer" },
+            { word: "KEYBOARD", clue: "Papan ketik untuk memasukkan huruf dan angka" },
+            { word: "MOUSE", clue: "Alat penggerak kursor berbentuk seperti tikus" },
+            { word: "PRINTER", clue: "Alat untuk mencetak dokumen ke atas kertas" },
+            { word: "CPU", clue: "Otak komputer atau kotak mesin utama" }
+        ];
+
+        let currentWordIndex = 0;
+        let wordScore = 0;
+        let currentScrambled = [];
+        let userPickedLetters = [];
+
+        function startWordGame() {
+            currentWordIndex = 0;
+            wordScore = 0;
+            document.getElementById('word-gameover').classList.add('hidden');
+            loadWordPuzzle();
+        }
+
+        function loadWordPuzzle() {
+            if (currentWordIndex >= wordData.length) {
+                finishWordGame();
+                return;
+            }
+
+            const data = wordData[currentWordIndex];
+            document.getElementById('word-level').textContent = `${currentWordIndex + 1} / ${wordData.length}`;
+            document.getElementById('word-score').textContent = wordScore;
+            document.getElementById('word-clue').textContent = data.clue;
+
+            // Scramble word letters
+            let letters = data.word.split('');
+            let scrambled = [...letters];
+            // Pastikan teracak
+            while(scrambled.join('') === data.word && letters.length > 1) {
+                scrambled.sort(() => Math.random() - 0.5);
+            }
+            currentScrambled = scrambled;
+            userPickedLetters = [];
+
+            renderWordLetters();
+        }
+
+        function renderWordLetters() {
+            const scrambledContainer = document.getElementById('scrambled-container');
+            const answerContainer = document.getElementById('answer-container');
+            
+            scrambledContainer.innerHTML = '';
+            answerContainer.innerHTML = '';
+
+            currentScrambled.forEach((item, idx) => {
+                const btn = document.createElement('button');
+                btn.className = "w-11 h-11 bg-indigo-500 hover:bg-indigo-600 text-white font-black text-lg rounded-xl shadow-md transition-transform active:scale-95 flex items-center justify-center";
+                btn.textContent = item;
+                btn.onclick = () => pickLetter(idx, item);
+                scrambledContainer.appendChild(btn);
+            });
+
+            if (userPickedLetters.length === 0) {
+                answerContainer.innerHTML = '<span class="text-slate-400 text-sm font-semibold italic">Ketuk huruf acak di atas untuk menyusun jawaban...</span>';
+            } else {
+                userPickedLetters.forEach((item, idx) => {
+                    const btn = document.createElement('button');
+                    btn.className = "w-11 h-11 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-lg rounded-xl shadow-md transition-transform active:scale-95 flex items-center justify-center";
+                    btn.textContent = item.letter;
+                    btn.onclick = () => unpickLetter(idx);
+                    answerContainer.appendChild(btn);
+                });
+            }
+        }
+
+        function pickLetter(scrambledIdx, letter) {
+            userPickedLetters.push({ letter: letter, origIdx: scrambledIdx });
+            currentScrambled.splice(scrambledIdx, 1);
+            renderWordLetters();
+        }
+
+        function unpickLetter(userArrIdx) {
+            const removed = userPickedLetters.splice(userArrIdx, 1)[0];
+            currentScrambled.splice(removed.origIdx, 0, removed.letter);
+            renderWordLetters();
+        }
+
+        function resetWordCurrent() {
+            loadWordPuzzle();
+        }
+
+        function checkWordAnswer() {
+            const currentObj = wordData[currentWordIndex];
+            const userAnswer = userPickedLetters.map(item => item.letter).join('');
+
+            if (!userAnswer) {
+                showToast("⚠️ Susun hurufnya terlebih dahulu!");
+                return;
+            }
+
+            if (userAnswer === currentObj.word) {
+                wordScore += 20;
+                showToast("✅ Hebat! Susunan kata benar!");
+                currentWordIndex++;
+                setTimeout(loadWordPuzzle, 600);
+            } else {
+                showToast("❌ Ups, susunan kata masih belum tepat. Coba lagi!");
+            }
+        }
+
+        function finishWordGame() {
+            document.getElementById('word-gameover').classList.remove('hidden');
+            document.getElementById('final-word-score').textContent = wordScore;
+        }
+
+        window.onload = () => {
+            updateFlashcard();
+            initBS();
+            initMatching();
+        };
+    </script>
+</body>
+</html>
